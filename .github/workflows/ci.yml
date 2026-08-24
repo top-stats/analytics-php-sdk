@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+# Only the latest commit on a branch or PR needs checking; cancel superseded runs.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      # composer.json declares php ">=8.1", so every supported minor has to
+      # stay green, not just the one a developer happens to run locally.
+      matrix:
+        php-version: ['8.1', '8.2', '8.3', '8.4']
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Use PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install
+        run: composer install --prefer-dist --no-progress
+
+      - name: Test
+        run: vendor/bin/phpunit
+
+      - name: Static analysis
+        run: vendor/bin/phpstan analyse --no-progress
