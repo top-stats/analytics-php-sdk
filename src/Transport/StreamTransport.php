@@ -47,8 +47,9 @@ final class StreamTransport implements TransportInterface
         }
 
         // $http_response_header is populated by the http wrapper in this
-        // scope on every response; the fallback covers non-http wrappers.
-        $rawHeaderLines = $http_response_header ?? [];
+        // scope on every response, and the URL is always http(s), so no
+        // fallback is needed (phpstan rejects a dead one).
+        $rawHeaderLines = $http_response_header;
         [$status, $responseHeaders] = self::parseResponseHeaders($rawHeaderLines);
 
         return new TransportResponse($status, $responseBody, $responseHeaders);
